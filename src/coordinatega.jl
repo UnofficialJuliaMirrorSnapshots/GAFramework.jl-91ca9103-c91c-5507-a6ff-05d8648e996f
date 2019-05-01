@@ -1,3 +1,8 @@
+module CoordinateGA
+
+using ..GAFramework
+import ..GAFramework: fitness, crossover, mutate, selection, randcreature, printfitness
+
 export CoordinateModel, CoordinateCreature
 
 """
@@ -16,7 +21,7 @@ minimizes function
         z + 0.25*(y-x)*randn(T) :: T
 
 """
-immutable CoordinateModel{F,T} <: GAModel
+struct CoordinateModel{F,T} <: GAModel
     f::F
     xmin::T
     xmax::T
@@ -28,17 +33,17 @@ function CoordinateModel(f::F,xmin,xmax,clamp::Bool=true) where {F}
     ET = eltype(xmin)
     N = length(xmin)
     xspan = xmax .- xmin
-    # check that F(ymin), F(ymax) can be converted to Float64 without error
+    # check that f(xmin), f(xmax) can be converted to Float64 without error
     z1 = Float64(f(xmin))
     z2 = Float64(f(xmax))
-    # and that f(yspan), f(ymin), and f(ymax) has sane values maybe
+    # and that f(xspan), f(xmin), and f(xmax) has sane values maybe
     # z1!=Inf && z2!=Inf && !isnan(z1) && !isnan(z2) ||
     #    error("f(xmin) or f(xmax) objective function is either NaN or Inf")
     all(xspan .>= zero(ET)) || error("xmax[i] < xmin[i] for some i")
     CoordinateModel{F,typeof(xspan)}(f,xmin,xmax,xspan,clamp)
 end
 
-immutable CoordinateCreature{T} <: GACreature
+struct CoordinateCreature{T} <: GACreature
     value :: T
     objvalue :: Float64
 end
@@ -52,7 +57,7 @@ function randcreature(m::CoordinateModel{F,T}, aux, rng) where {F,T}
     CoordinateCreature(xvalue, m)
 end
 
-immutable AverageCrossover end
+struct AverageCrossover end
 function crossover(::AverageCrossover, z::CoordinateCreature{T},
                    x::CoordinateCreature{T}, y::CoordinateCreature{T},
                    m::CoordinateModel{F,T}, params, curgen::Integer,
@@ -61,7 +66,7 @@ function crossover(::AverageCrossover, z::CoordinateCreature{T},
     CoordinateCreature(z.value, m)
 end
 
-immutable SinglePointCrossover end
+struct SinglePointCrossover end
 function crossover(::SinglePointCrossover, z::CoordinateCreature{T},
                    x::CoordinateCreature{T}, y::CoordinateCreature{T},
                    m::CoordinateModel{F,T}, params, curgen::Integer,
@@ -78,7 +83,7 @@ function crossover(::SinglePointCrossover, z::CoordinateCreature{T},
     CoordinateCreature(z.value, m)
 end
 
-immutable TwoPointCrossover end
+struct TwoPointCrossover end
 function crossover(::TwoPointCrossover, z::CoordinateCreature{T},
                    x::CoordinateCreature{T}, y::CoordinateCreature{T},
                    m::CoordinateModel{F,T}, params, curgen::Integer,
@@ -180,3 +185,5 @@ selection(pop::Vector{<:CoordinateCreature{T}}, n::Integer, rng) where {T} =
 
 printfitness(curgen::Integer, x::CoordinateCreature{T}) where {T} =
     println("curgen: $curgen value: $(x.value) obj. value: $(x.objvalue)")
+
+end # CoordinateGA
